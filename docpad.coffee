@@ -2,6 +2,17 @@
 # It is simply a CoffeeScript Object which is parsed by CSON
 docpadConfig =
 
+  # Paths Configuration
+  # =================================
+
+  # Regenerate Delay
+  # The time (in milliseconds) to wait after a source file has
+  # changed before using it to regenerate. Updating over the
+  # network (e.g. via FTP) can cause a page to be partially
+  # rendered as the page is regenerated *before* the source file
+  # has completed updating: in this case increase this value.
+  regenerateDelay: 0    # default
+
   # Template Data
   # =============
   # These are variables that will be accessible via our templates
