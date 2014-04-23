@@ -50,7 +50,7 @@ docpad run
 프리젠테이션 기능은 [Reveal.js](http://lab.hakim.se/reveal-js/)를 이용해 만들어졌다.
 Reveal.js를 이용한 프리젠테이션 작성 방법을 미리 숙지하기를 바란다.
 
-먼저 `src/documents/presentations` 디렉토리에 새로운 `html` 파일을 추가한다.
+먼저 `src/documents/presentations` 디렉토리에 새로운 HTML 파일을 추가한다.
 예제로 포함되어 있는 `2014-04-22-sample.html` 파일을 복사해서 만들면 된다.
 관리를 위해서 파일 이름 형식을 샘플과 같이 _날짜와 제목을 결합한 형태_로 만드는 것이 좋겠다.
 
@@ -117,6 +117,19 @@ transition: default
 
 하지만 약간의 딜레이가 있으니 조금 기다려야 한다.
 _만약 `livereload`가 동작하지 않는다면 묻고 따지지 말고 그냥 그런가보다 하고 브라우저를 직접 새로 고침하길 바란다._
+
+##### 이미지와 첨부 파일 #####
+
+만약 이미지와 첨부 파일을 포함하는 경우에는 반드시 **절대 경로**를 사용하자.
+
+예를 들어, `src/documents/presentations` 디렉토리에 작업 중인 HTML 파일이 있고,
+`src/documents/presentations/images` 디렉토리에 이미지나 첨부 파일이 있다고 하자.
+
+이 때, HTML 파일에서 `images/...`으로 접근할 경우엔,
+로컬에서는 잘 되지만 서버에 반영할 경우 제대로 동작하지 않는다.
+서버 반영 시 DocPad의 Cleanurl 플러그인이 디렉토리 구조를 변경하기 때문이다.
+
+그러므로 이 경우엔 반드시 `/presentations/images/...`으로 접근해야 한다.
 
 ### 5. 반영 ###
 
