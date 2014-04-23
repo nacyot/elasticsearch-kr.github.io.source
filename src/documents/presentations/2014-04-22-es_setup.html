@@ -1,0 +1,231 @@
+---
+title: ES Setup
+description: Elasticsearch Setup
+date: 2014-04-22
+author: Jongmin Kim
+layout: presentation
+theme: solarized
+transition: default
+---
+
+<section>
+  <h2>Elasticsearch 설치 및 설정</h2>
+  <p>
+    <small>발표 : <a href="http://kimjmin.net">김종민</a> / <a href="http://twitter.com/kimjmin">@kimjmin</a></small>
+  </p>
+</section>
+
+<section>
+  <h2>설치</h2>
+  <p>
+    <a href="http://www.elasticsearch.org/overview/elkdownloads" target="_new">http://www.elasticsearch.org/overview/elkdownloads</a>
+  </p>
+</section>
+
+<!-- Example of nested vertical slides -->
+<section>
+  <section>
+    <h2>.tar.gz / .zip </h2>
+    <p>
+      elasticsearch.tar.gz 과 elasticsearch.zip 파일의<br/>
+      bin/ 디렉토리 내용
+    </p>
+    <p>
+      <img width="400" height="240" src="img_es_setup/01_tar.png" alt="elasticsearch-tar.gz">
+      <img width="300" height="240" src="img_es_setup/02_zip.png" alt="elasticsearch-tar.gz">
+    </p>
+  </section>
+
+  <section>
+    <h2>Elasticsearch 실행 (Unix 계열)</h2>
+  <ul>
+    <li>Java 6 이상 설치 필요.</li>
+    <li>1.0.0 이후 버전</li>
+    <ul>
+      <li>foreground 실행  : $ bin/elasticsearch </li>
+      <li>background 실행 : $ bin/elasticsearch -d</li>
+      <li>pid 저장 : $ bin/elasticsearch -d -p <u>pid.txt</u></li>
+    </ul>
+    <li>0.90. 이전 버전</li>
+    <ul>
+      <li>foreground 실행 : $ bin/elasticsearch -f</li>
+      <li>background 실행 : $ bin/elasticsearch</li>
+    </ul>
+  </ul>  
+  </section>
+
+  <section>
+    <h2>Elasticsearch 실행 (Windows 계열)</h2>
+  <ul>
+    <li>Java 6 이상 설치 필요.</li>
+    <li>$JAVA_HOME 환경변수 설정 필요.</li>
+  </ul>
+  <p>
+    <img width="600" height="270" src="img_es_setup/03_win_cmd.png" alt="">
+    <img width="300" height="360" src="img_es_setup/04_win_param.png" alt="">
+  </p>
+  </section>
+</section>
+
+<section>
+  <section>
+    <h2>Elasticsearch 환경설정</h2>
+    <p>Java Option : -X -D </p>
+    <pre>
+$ bin/elasticsearch -Xmx2g -Xms2g -Des.index.store.type=memory --node.name=my-node
+    </pre>
+    <p>ps -ef | grep elasticsearch 명령으로 확인</p>
+  </section>
+  
+  <section>
+    <h3>bin/elasticsearch.in.sh</h3>
+    <p>-Xms256m -Xmx1g</p>
+    <pre>
+if [ "x$ES_MIN_MEM" = "x" ]; then
+    ES_MIN_MEM=256m
+fi
+if [ "x$ES_MAX_MEM" = "x" ]; then
+    ES_MAX_MEM=1g
+fi
+    </pre>
+    <p>오버헤드 방지를 위해 같은 사이즈로 하는 것을 추천.</p>
+    <p>
+      참고 : <a target="_new" href="http://wiki.ex-em.com/index.php/JVM_Options">http://wiki.ex-em.com/index.php/JVM_Options</a>
+    </p>
+  </section>
+</section>
+
+<section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <p>모든 옵션은 -Des.* 또는 --* 으로 실행시 설정 가능</p>
+    <small>$ bin/elasticsearch -Des.node.name=node1<br/>$ bin/elasticsearch --node.name=node1</small>
+    <p>YAML 또는 JSON 형식으로 환경설정 가능.</p>
+    <small>cluster health check : localhost:9200/_cluster/health?pretty=true</small>
+    <small>노드 정보 확인 : curl localhost:9200/_nodes/process?pretty=true</small>
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>cluster</h3>
+    <p>cluster.name : </p>
+    <p>같은 클러스터명을 가진 노드끼리 바인딩 됨.</p>
+    <pre>
+cluster.name: kjm
+
+cluster:
+  name: kjm
+    </pre>
+    <small>cluster health check : localhost:9200/_cluster/health?pretty=true</small>
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>node</h3>
+    <ul>
+      <li>node.name: "node1" - 노드명. 설정하지 않으면 임의로 생성됨.</li>
+      <li>node.master: true/false - 메타정보를 가지고 있는 마스터 노드. 1개 이상.</li>
+      <li>node.data: true/false - 실제 인덱스 데이터를 저장하는 노드.</li>
+      <li>node.max_local_storage_nodes: 1 - 같은 로케이션에서 실행 가능한 노드.</li>
+    </ul>
+    <small>노드 정보 확인 : localhost:9200/_nodes/process?pretty=true</small>
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>Index</h3>
+    <p>Shards & Replicas</p>
+    <img width="640" height="420" src="img_es_setup/05_shards.png" alt="">
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>Index</h3>
+    <ul>
+      <li>index.number_of_shards: 5 - 샤드 개수.</li>
+      <li>index.number_of_replicas: 1 - 복제본 개수.</li>
+    </ul>
+    <small>샤드 정보 확인 : localhost:9200/[index]/_status?pretty=true</small>
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>Paths</h3>
+    <ul>
+      <li>path.conf: - *.yml 파일들이 있는 경로.</li>
+      <li>path.data: - 색인 파일들이 저장되는 경로. , 구분으로 다중 지정 가능.</li>
+      <li>path.work: - temp 경로.</li>
+      <li>path.logs: - 로그 파일이 저장되는 경로.</li>
+      <li>path.plugins: - 플러그인이 설치되는 경로.</li>
+    </ul>
+    <small>설정하지 않는 경우 현재 ES 가 설치된 경로 이하 경로에 설치된다.</small>
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>Plugin</h3>
+    <p>이 옵션에 명시한 플러그인이 설치되어 있지 않으면 노드가 실행되지 않음.</p>
+    <small>plugin.mandatory: mapper-attachments,lang-groovy</small>
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>Memory</h3>
+    <p>JVM 에 의한 메모리 스왑이 일어나지 않도록 메모리 락 설정.</p>
+    <p>cluster.name: 과 함께 초기에 반드시 설정 해 주는 것을 추천함.</p>
+    <small>bootstrap.mlockall: true</small>
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>Network And HTTP</h3>
+    <ul>
+      <li>network.bind_host: 192.168.0.1</li>
+      <li>network.publish_host: 192.168.0.1 </li>
+      <li>network.host: 192.168.0.1 - bind_host + publish_host</li>
+      <li>transport.tcp.port: 9300 - 다른 노드와 바인딩하는 포트.</li>
+      <li>transport.tcp.compress: true/false - 노드간 통신시 데이터 압축</li>
+      <li>http.port: 9200 - http 통신을 위한 포트. 9200 부터 차례대로 증가.</li>
+      <li>http.max_content_length: 100mb - http 명령으로 전달되는 최대 데이터.</li>
+      <li>http.enabled: true/false - http 접속 불가하도록 설정.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>Gateway</h3>
+    <p>클러스터의 메타정보, 인덱스 설정, 매핑정보 등을 저장하는 구성</p>
+    <ul>
+      <li>gateway.type: local - 디폴트 게이트웨이. 현재 local 만 사용.</li>
+      <li>gateway.recover_after_nodes: 1 - 노드가 1개인 경우 </li>
+      <li>gateway.recover_after_time: 5m - 5분 후 리커버리 시작.</li>
+      <li>gateway.expected_nodes: 2 - 2개 이상 노드가 있을때 바로 리커버리 시작.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>config/elasticsearch.yml</h2>
+    <h3>Discovery</h3>
+    <p>다른 네트워크의 노드와 바인딩을 위해 필요한 설정.</p>
+    <ul>
+      <li>discovery.zen.minimum_master_nodes: 1</li>
+      <li>discovery.zen.ping.timeout: 3s</li>
+      <li>discovery.zen.ping.multicast.enabled: false</li>
+      <li>discovery.zen.ping.unicast.hosts: ["host1", "host2:port"] - multicast false 우선 설정할것.</li>
+    </ul>
+    <p>elasticsearch-cloud-aws 플러그인 디스크버리 설정.</p>
+    <pre>
+cloud:
+    aws:
+        access_key: AKVAIQBF2RECL7FJWGJQ
+        secret_key: vExyMThREXeRMm/b/LRzEB8jWwvzQeXgjqMX+6br
+
+discovery:
+    type: ec2
+    </pre>
+  </section>
+
+</section>
+
+
