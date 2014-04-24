@@ -1,0 +1,1062 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>(Elasticsearch Document APIs)</title>
+<meta name="author" content="(Daekwon Kim)"/>
+<link rel="stylesheet" href="./reveal.js/css/reveal.min.css"/>
+<link rel="stylesheet" href="./reveal.js/css/theme/nacyot.css" id="theme"/>
+<link rel="stylesheet" href="./stylesheets/code.css"/>
+<link rel="stylesheet" href="./reveal.js/css/print/pdf.css" type="text/css" media="print"/>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section>
+<h1>Elasticsearch Document APIs</h1>
+<h2>Daekwon Kim</h2>
+<h2><a href="mailto:propellerheaven@gmail.com">propellerheaven@gmail.com</a></h2>
+<h2></h2></section>
+
+<section>
+<section id="sec-1" >
+
+<h2>nacyot</h2>
+<ul class="org-ul">
+<li><img src="./images/nacyot.jpeg" alt="nacyot.jpeg" />
+</li>
+<li><a href="http://nacyot.com">http://nacyot.com</a>
+</li>
+<li>@nacyot
+</li>
+<li>Ruby programmer
+</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="sec-2" >
+
+<h2>Leevi</h2>
+<ul class="org-ul">
+<li><img src="./images/leevi.png" alt="leevi.png" />
+</li>
+<li><a href="http://leevi.co.kr/">http://leevi.co.kr/</a>
+</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="sec-3" >
+
+<h2>index api</h2>
+<ul class="org-ul">
+<li>document를 elasticsearch에 index하는 api
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "user" : "kimechy",</span>
+<span class="org-string">    "post_date" : "2009-11-15T14:12:12",</span>
+<span class="org-string">    "message" : "trying out Elasticsearch"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>index: twitter / type: tweet / id: 1 에 데이터 입력
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{
+   <span class="org-keyword">"_index"</span> : <span class="org-string">"twitter"</span>,
+    <span class="org-keyword">"_type"</span> : <span class="org-string">"tweet"</span>,
+    <span class="org-keyword">"_id"</span> : <span class="org-string">"1"</span>,
+    <span class="org-keyword">"_version"</span> : <span class="org-constant">1</span>,
+    <span class="org-keyword">"created"</span> : <span class="org-constant">true</span>
+}
+</pre>
+</div>
+
+</section>
+<section id="sec-3-1" >
+
+<h3>automatic index creation</h3>
+<ul class="org-ul">
+<li><code>index.mapping.allow_type_wrapper</code>
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XDELETE <span class="org-string">'http://172.17.0.2:9200/twitter'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPOST <span class="org-string">'http://172.17.0.2:9200/twitter'</span> -d <span class="org-string">'{</span>
+<span class="org-string">  "settings": {</span>
+<span class="org-string">    "index": {</span>
+<span class="org-string">      "mapping.allow_type_wrapper": true</span>
+<span class="org-string">    }</span>
+<span class="org-string">  }</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "tweet" : {</span>
+<span class="org-string">        "user" : "kimchy",</span>
+<span class="org-string">        "post_date" : "2009-11-15T14:12:12",</span>
+<span class="org-string">        "message" : "trying out Elasticsearch"</span>
+<span class="org-string">    }</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+</section>
+<section id="sec-3-1-1" >
+
+<h4>configuration</h4>
+<ul class="org-ul">
+<li>action.auto<sub>create</sub><sub>index</sub>
+<ul class="org-ul">
+<li><code>false</code>
+</li>
+<li><code>-abcd*</code>
+</li>
+<li><code>+abcd*</code>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="sec-3-1-2" >
+
+<h4>type mapping</h4>
+<ul class="org-ul">
+<li>기본적으로 암묵적(자동) 타입 맵핑을 사용
+</li>
+<li>명시적 타입 맵핑
+</li>
+
+<li>암묵적 타입 맵핑 사용 금지
+<ul class="org-ul">
+<li><code>index.mapper.dynamic</code> 값 false로 설정
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT <span class="org-string">'http://localhost:9200/twitter/tweet/_mapping'</span> -d <span class="org-string">'</span>
+<span class="org-string">{</span>
+<span class="org-string">    "tweet" : {</span>
+<span class="org-string">        "properties" : {</span>
+<span class="org-string">            "message" : {"type" : "string", "store" : true }</span>
+<span class="org-string">        }</span>
+<span class="org-string">    }</span>
+<span class="org-string">}</span>
+<span class="org-string">'</span>
+</pre>
+</div>
+</section>
+<section id="sec-3-2" >
+
+<h3>versioning</h3>
+<ul class="org-ul">
+<li>document에는 자동적으로 version 부여(1부터 시작)
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XPUT <span class="org-string">'172.17.0.2:9200/twitter/tweet/2'</span> -d <span class="org-string">'{"message" : "version = 1"}'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{<span class="org-keyword">"_index"</span>:<span class="org-string">"twitter"</span>,<span class="org-keyword">"_type"</span>:<span class="org-string">"tweet"</span>,<span class="org-keyword">"_id"</span>:<span class="org-string">"2"</span>,<span class="org-keyword">"_version"</span>:<span class="org-constant">1</span>,<span class="org-keyword">"created"</span>:<span class="org-constant">true</span>}
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT <span class="org-string">'172.17.0.2:9200/twitter/tweet/2'</span> -d <span class="org-string">'{"message" : "version = 2"}'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{<span class="org-keyword">"_index"</span>:<span class="org-string">"twitter"</span>,<span class="org-keyword">"_type"</span>:<span class="org-string">"tweet"</span>,<span class="org-keyword">"_id"</span>:<span class="org-string">"2"</span>,<span class="org-keyword">"_version"</span>:<span class="org-constant">2</span>,<span class="org-keyword">"created"</span>:<span class="org-constant">false</span>}
+</pre>
+</div>
+</section>
+<section id="sec-3-3" >
+
+<h3>versioning</h3>
+<ul class="org-ul">
+<li>버전 인수를 사용하면 버전이 맞아야만 실행
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XPUT <span class="org-string">'172.17.0.2:9200/twitter/tweet/2?version=2'</span> -d <span class="org-string">'{"message" : "version = 3"}'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{<span class="org-keyword">"_index"</span>:<span class="org-string">"twitter"</span>,<span class="org-keyword">"_type"</span>:<span class="org-string">"tweet"</span>,<span class="org-keyword">"_id"</span>:<span class="org-string">"2"</span>,<span class="org-keyword">"_version"</span>:<span class="org-constant">3</span>,<span class="org-keyword">"created"</span>:<span class="org-constant">false</span>}
+</pre>
+</div>
+</section>
+<section id="sec-3-4" >
+
+<h3>version types</h3>
+<ul class="org-ul">
+<li>internal
+<ul class="org-ul">
+<li>document 현재 버전과 version 인자가 같아야만 함
+</li>
+</ul>
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XPUT <span class="org-string">'172.17.0.2:9200/twitter/tweet/2?version=2&amp;version_type=internal'</span> -d <span class="org-string">'{"message" : "version = 3"}'</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>external or external<sub>gt</sub>
+<ul class="org-ul">
+<li>document를 새로 만들거나 현재 버전보다 version 인자가 큰 경우
+</li>
+</ul>
+</li>
+<li>external<sub>gte</sub>
+<ul class="org-ul">
+<li>external과 비슷하나 같은 경우도 포함
+</li>
+</ul>
+</li>
+<li>force
+<ul class="org-ul">
+<li>현재 버전을 무시하고 version 인자 적용
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="sec-3-5" >
+
+<h3>operation type</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1'</span> -d <span class="org-string">'{               </span>
+<span class="org-string">    "user" : "kimchy",</span>
+<span class="org-string">    "post_date" : "2009-11-15T14:12:12",</span>
+<span class="org-string">    "message" : "trying out Elasticsearch"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{<span class="org-keyword">"_index"</span>:<span class="org-string">"twitter"</span>,<span class="org-keyword">"_type"</span>:<span class="org-string">"tweet"</span>,<span class="org-keyword">"_id"</span>:<span class="org-string">"1"</span>,<span class="org-keyword">"_version"</span>:<span class="org-constant">3</span>,<span class="org-keyword">"created"</span>:<span class="org-constant">false</span>}
+</pre>
+</div>
+
+</section>
+<section id="sec-3-5-1" >
+
+<h4>operation type = create</h4>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1?op_type=create'</span> -d <span class="org-string">'{               </span>
+<span class="org-string">    "user" : "kimchy",</span>
+<span class="org-string">    "post_date" : "2009-11-15T14:12:12",</span>
+<span class="org-string">    "message" : "trying out Elasticsearch"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{<span class="org-keyword">"error"</span>:<span class="org-string">"DocumentAlreadyExistsException[[twitter][2] [tweet][1]: document already exists]"</span>,<span class="org-keyword">"status"</span>:<span class="org-constant">409</span>}
+</pre>
+</div>
+</section>
+<section id="sec-3-5-2" >
+
+<h4>alias</h4>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1?op_type=create ...</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1/_create</span>
+</pre>
+</div>
+</section>
+<section id="sec-3-6" >
+
+<h3>automatic id generation</h3>
+<ul class="org-ul">
+<li>id가 지정되지 않으면 자동으로 번호를 부여받음
+</li>
+<li>op<sub>type의</sub> 기본설정값은 create
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPOST <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "user" : "kimchy",</span>
+<span class="org-string">    "post_date" : "2009-11-15T14:12:12",</span>
+<span class="org-string">    "message" : "trying out Elasticsearch"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">{
+    <span class="org-string">"_index"</span> : <span class="org-string">"twitter"</span>,
+    <span class="org-string">"_type"</span> : <span class="org-string">"tweet"</span>,
+    <span class="org-string">"_id"</span> : <span class="org-string">"6a8ca01c-7896-48e9-81cc-9f70661fcb32"</span>,
+    <span class="org-string">"_version"</span> : 1,
+    <span class="org-string">"created"</span> : true
+}
+</pre>
+</div>
+</section>
+<section id="sec-3-7" >
+
+<h3>routing</h3>
+<ul class="org-ul">
+<li>document를 저장할 특정 shard를 지정하는 인자
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPOST <span class="org-string">'http://172.17.0.2:9200/twitter/tweet?routing=kimchy'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "user" : "kimchy",</span>
+<span class="org-string">    "post_date" : "2009-11-15T14:12:12",</span>
+<span class="org-string">    "message" : "trying out Elasticsearch"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li>document는 primary shard에 저장됨
+</li>
+<li>primary shard가 다수 있을 때, 
+<ul class="org-ul">
+<li>특정 검색을 수행하면
+</li>
+<li>모든 shard를 검색해야함
+</li>
+</ul>
+</li>
+<li>routing으로 저장되는 shard를 명시적으로 결정
+</li>
+</ul>
+
+</section>
+<section id="sec-3-7-1" >
+
+<h4>search</h4>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XGET <span class="org-string">'172.17.0.2:9200/twitter/tweet/_search?routing=kimchy'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "query": {</span>
+<span class="org-string">      "filtered" : {</span>
+<span class="org-string">          "query" : {</span>
+<span class="org-string">              "query_string" : {</span>
+<span class="org-string">                  "query" : "some query string here"</span>
+<span class="org-string">              }</span>
+<span class="org-string">          },</span>
+<span class="org-string">          "filter" : {</span>
+<span class="org-string">              "term" : { "user" : "kimchy" }</span>
+<span class="org-string">          }</span>
+<span class="org-string">      }</span>
+<span class="org-string">  }</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+<section id="sec-3-8" >
+
+<h3>parents &amp; children</h3>
+<ul class="org-ul">
+<li>자식 부모 관계를 명시적으로 지정
+</li>
+<li>routing이 지정되지 않으면 자식은 부모와 같은 routing 값을 가짐
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT 172.17.0.2:9200/blogs/blog_tag/1122?<span class="org-variable-name">parent</span>=1111 -d <span class="org-string">'{</span>
+<span class="org-string">    "tag" : "something"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+<section id="sec-3-9" >
+
+<h3>timestamp</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT 172.17.0.2:9200/twitter/tweet/1?<span class="org-variable-name">timestamp</span>=2009-11-15T14%3A12%3A12 -d <span class="org-string">'{</span>
+<span class="org-string">    "user" : "kimchy",</span>
+<span class="org-string">    "message" : "trying out Elasticsearch",</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-timestamp-field.html">mapping-timestamp-field</a>
+</li>
+</ul>
+</section>
+<section id="sec-3-10" >
+
+<h3>ttl</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1?ttl=86400000'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "user": "kimchy",</span>
+<span class="org-string">    "message": "Trying out elasticsearch, so far so good?"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1?ttl=1d'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "user": "kimchy",</span>
+<span class="org-string">    "message": "Trying out elasticsearch, so far so good?"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "_ttl": "1d",</span>
+<span class="org-string">    "user": "kimchy",</span>
+<span class="org-string">    "message": "Trying out elasticsearch, so far so good?"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html">mapping-ttl-field</a>
+</li>
+</ul>
+</section>
+<section id="sec-3-11" >
+
+<h3>distributed @@</h3>
+
+</section>
+<section id="sec-3-12" >
+
+<h3>write consitency @@</h3>
+
+</section>
+<section id="sec-3-13" >
+
+<h3>asynchronous replication @@</h3>
+<ul class="org-ul">
+<li><code>?replication=async</code>
+</li>
+</ul>
+</section>
+<section id="sec-3-14" >
+
+<h3>refresh</h3>
+<ul class="org-ul">
+<li><code>?refresh=true</code>
+</li>
+</ul>
+</section>
+<section id="sec-3-15" >
+
+<h3>timeout</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1?timeout=5m'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "user" : "kimchy",</span>
+<span class="org-string">    "post_date" : "2009-11-15T14:12:12",</span>
+<span class="org-string">    "message" : "trying out Elasticsearch"</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="sec-4" >
+
+<h2>get api</h2>
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XGET <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{
+    <span class="org-keyword">"_index"</span> : <span class="org-string">"twitter"</span>,
+    <span class="org-keyword">"_type"</span> : <span class="org-string">"tweet"</span>,
+    <span class="org-keyword">"_id"</span> : <span class="org-string">"1"</span>,
+    <span class="org-keyword">"_version"</span> : <span class="org-constant">1</span>,
+    <span class="org-keyword">"found"</span>: <span class="org-constant">true</span>,
+    <span class="org-keyword">"_source"</span> : {
+        <span class="org-keyword">"user"</span> : <span class="org-string">"kimchy"</span>,
+        <span class="org-keyword">"postDate"</span> : <span class="org-string">"2009-11-15T14:12:12"</span>,
+        <span class="org-keyword">"message"</span> : <span class="org-string">"trying out Elasticsearch"</span>
+    }
+}
+</pre>
+</div>
+
+</section>
+<section id="sec-4-1" >
+
+<h3>checking existence of document</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XHEAD -i <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/1'</span>
+HTTP/1.1 200 OK
+Content-Type: text/plain; <span class="org-variable-name">charset</span>=UTF-8
+Content-Length: 0
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XHEAD -i <span class="org-string">'http://172.17.0.2:9200/twitter/tweet/100'</span>
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; <span class="org-variable-name">charset</span>=UTF-8
+Content-Length: 0
+</pre>
+</div>
+</section>
+<section id="sec-4-2" >
+
+<h3>realtime @@</h3>
+<ul class="org-ul">
+<li><code>?realtime=false</code>
+</li>
+<li>action.get.realtime : false
+</li>
+</ul>
+</section>
+<section id="sec-4-3" >
+
+<h3>optional type @@</h3>
+
+</section>
+<section id="sec-4-4" >
+
+<h3>source filtering</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XGET <span class="org-string">'http://localhost:9200/twitter/tweet/1?_source=false'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{<span class="org-keyword">"_index"</span>:<span class="org-string">"twitter"</span>,<span class="org-keyword">"_type"</span>:<span class="org-string">"tweet"</span>,<span class="org-keyword">"_id"</span>:<span class="org-string">"1"</span>,<span class="org-keyword">"_version"</span>:<span class="org-constant">3</span>,<span class="org-keyword">"found"</span>:<span class="org-constant">true</span>}
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XGET <span class="org-string">'http://localhost:9200/twitter/tweet/1'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{<span class="org-keyword">"_index"</span>:<span class="org-string">"twitter"</span>,<span class="org-keyword">"_type"</span>:<span class="org-string">"tweet"</span>,<span class="org-keyword">"_id"</span>:<span class="org-string">"1"</span>,<span class="org-keyword">"_version"</span>:<span class="org-constant">3</span>,<span class="org-keyword">"found"</span>:<span class="org-constant">true</span>, <span class="org-keyword">"_source"</span> : {
+    <span class="org-keyword">"user"</span> : <span class="org-string">"kimchy"</span>,
+    <span class="org-keyword">"post_date"</span> : <span class="org-string">"2009-11-15T14:12:12"</span>,
+    <span class="org-keyword">"message"</span> : <span class="org-string">"trying out Elasticsearch"</span>
+}}
+</pre>
+</div>
+
+</section>
+<section id="sec-4-4-1" >
+
+<h4>source filtering example</h4>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XGET <span class="org-string">'http://localhost:9200/twitter/tweet/1?_source_include=*.id&amp;_source_exclude=entities'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XGET <span class="org-string">'http://localhost:9200/twitter/tweet/1?_source=*.id,retweeted'</span>
+</pre>
+</div>
+</section>
+<section id="sec-4-5" >
+
+<h3>fields</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XGET <span class="org-string">'http://localhost:9200/twitter/tweet/1?fields=title,content'</span>
+</pre>
+</div>
+</section>
+<section id="sec-4-6" >
+
+<h3>getting the _source directly</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XGET <span class="org-string">'http://localhost:9200/twitter/tweet/1/_source'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XGET <span class="org-string">'http://localhost:9200/twitter/tweet/1/_source?_source_include=*.id&amp;_source_exclude=entities'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XHEAD -i <span class="org-string">'http://localhost:9200/twitter/tweet/1/_source'</span>
+</pre>
+</div>
+</section>
+<section id="sec-4-7" >
+
+<h3>routing</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XGET <span class="org-string">'http://localhost:9200/twitter/tweet/1?routing=kimchy'</span>
+</pre>
+</div>
+</section>
+<section id="sec-4-8" >
+
+<h3>preference</h3>
+<ul class="org-ul">
+<li><code>?preference=_primary</code> 
+</li>
+<li><code>?preference=_local</code> 
+</li>
+</ul>
+</section>
+<section id="sec-4-9" >
+
+<h3>refresh</h3>
+<ul class="org-ul">
+<li><code>?refresh=true</code>
+</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="sec-5" >
+
+<h2>delete api</h2>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XDELETE <span class="org-string">'http://localhost:9200/twitter/tweet/1'</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{
+    <span class="org-keyword">"found"</span> : <span class="org-constant">true</span>,
+    <span class="org-keyword">"_index"</span> : <span class="org-string">"twitter"</span>,
+    <span class="org-keyword">"_type"</span> : <span class="org-string">"tweet"</span>,
+    <span class="org-keyword">"_id"</span> : <span class="org-string">"1"</span>,
+    <span class="org-keyword">"_version"</span> : <span class="org-constant">2</span>
+}
+</pre>
+</div>
+
+</section>
+<section id="sec-5-1" >
+
+<h3>versioning</h3>
+<ul class="org-ul">
+<li><code>?version={number}</code> 
+</li>
+<li>버전이 같아야만 삭제
+</li>
+</ul>
+</section>
+<section id="sec-5-2" >
+
+<h3>routing</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XDELETE <span class="org-string">'http://localhost:9200/twitter/tweet/1?routing=kimchy'</span>
+</pre>
+</div>
+</section>
+<section id="sec-5-3" >
+
+<h3>parent</h3>
+<ul class="org-ul">
+<li>기본적으로 routing과 같음
+</li>
+</ul>
+</section>
+<section id="sec-5-4" >
+
+<h3>automatic index creation</h3>
+<ul class="org-ul">
+<li>index가 없으면 새로 만듬
+</li>
+</ul>
+</section>
+<section id="sec-5-5" >
+
+<h3>distributed</h3>
+</section>
+<section id="sec-5-6" >
+
+<h3>replication type</h3>
+</section>
+<section id="sec-5-7" >
+
+<h3>write consistency</h3>
+</section>
+<section id="sec-5-8" >
+
+<h3>refresh</h3>
+</section>
+<section id="sec-5-9" >
+
+<h3>timeout</h3>
+</section>
+</section>
+<section>
+<section id="sec-6" >
+
+<h2>update api</h2>
+<ul class="org-ul">
+<li>문서 생성
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -XPUT localhost:9200/test/type1/1 -d <span class="org-string">'{</span>
+<span class="org-string">    "counter" : 1,</span>
+<span class="org-string">    "tags" : ["red"]</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+</section>
+<section id="sec-6-1" >
+
+<h3>update api - script</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">curl -XPOST <span class="org-string">'localhost:9200/test/type1/1/_update'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "script" : "ctx._source.counter += count",</span>
+<span class="org-string">    "params" : {</span>
+<span class="org-string">        "count" : 4</span>
+<span class="org-string">    }</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="sec-7" >
+
+<h2>multi get api</h2>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl <span class="org-string">'localhost:9200/_mget'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "docs" : [</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_index" : "test",</span>
+<span class="org-string">            "_type" : "type",</span>
+<span class="org-string">            "_id" : "1"</span>
+<span class="org-string">        },</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_index" : "test",</span>
+<span class="org-string">            "_type" : "type",</span>
+<span class="org-string">            "_id" : "2"</span>
+<span class="org-string">        }</span>
+<span class="org-string">    ]</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+
+</section>
+<section id="sec-7-1" >
+
+<h3>multi get api</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl <span class="org-string">'localhost:9200/test/_mget'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "docs" : [</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_type" : "type",</span>
+<span class="org-string">            "_id" : "1"</span>
+<span class="org-string">        },</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_type" : "type",</span>
+<span class="org-string">            "_id" : "2"</span>
+<span class="org-string">        }</span>
+<span class="org-string">    ]</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+<section id="sec-7-2" >
+
+<h3>multi get api</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl <span class="org-string">'localhost:9200/test/type/_mget'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "docs" : [</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_id" : "1"</span>
+<span class="org-string">        },</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_id" : "2"</span>
+<span class="org-string">        }</span>
+<span class="org-string">    ]</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+<section id="sec-7-3" >
+
+<h3>multi get api</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl <span class="org-string">'localhost:9200/test/type/_mget'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "ids" : ["1", "2"]</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+<section id="sec-7-4" >
+
+<h3>source filtering</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">curl <span class="org-string">'localhost:9200/_mget'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "docs" : [</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_index" : "test",</span>
+<span class="org-string">            "_type" : "type",</span>
+<span class="org-string">            "_id" : "3",</span>
+<span class="org-string">            "_source" : {</span>
+<span class="org-string">                "include": ["user"],</span>
+<span class="org-string">                "_exclude": ["user.location"]</span>
+<span class="org-string">            }</span>
+<span class="org-string">        }</span>
+<span class="org-string">    ]</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+<section id="sec-7-5" >
+
+<h3>fields</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">curl <span class="org-string">'localhost:9200/_mget'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "docs" : [</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_index" : "test",</span>
+<span class="org-string">            "_type" : "type",</span>
+<span class="org-string">            "_id" : "1",</span>
+<span class="org-string">            "fields" : ["field1", "field2"]</span>
+<span class="org-string">        },</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_index" : "test",</span>
+<span class="org-string">            "_type" : "type",</span>
+<span class="org-string">            "_id" : "2",</span>
+<span class="org-string">            "fields" : ["field3", "field4"]</span>
+<span class="org-string">        }</span>
+<span class="org-string">    ]</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+<section id="sec-7-6" >
+
+<h3>routing</h3>
+<div class="org-src-container">
+
+<pre class="src src-sh">curl <span class="org-string">'localhost:9200/_mget?routing=key1'</span> -d <span class="org-string">'{</span>
+<span class="org-string">    "docs" : [</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_index" : "test",</span>
+<span class="org-string">            "_type" : "type",</span>
+<span class="org-string">            "_id" : "1",</span>
+<span class="org-string">            "_routing" : "key2"</span>
+<span class="org-string">        },</span>
+<span class="org-string">        {</span>
+<span class="org-string">            "_index" : "test",</span>
+<span class="org-string">            "_type" : "type",</span>
+<span class="org-string">            "_id" : "2"</span>
+<span class="org-string">        }</span>
+<span class="org-string">    ]</span>
+<span class="org-string">}'</span>
+</pre>
+</div>
+</section>
+
+</section>
+<section>
+<section id="sec-8" >
+
+<h2>bulk api</h2>
+<div class="org-src-container">
+
+<pre class="src src-sh">$ curl -s -XPOST localhost:9200/_bulk
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{ <span class="org-keyword">"index"</span> : { <span class="org-keyword">"_index"</span> : <span class="org-string">"test"</span>, <span class="org-keyword">"_type"</span> : <span class="org-string">"type1"</span>, <span class="org-keyword">"_id"</span> : <span class="org-string">"1"</span> } }
+{ <span class="org-keyword">"field1"</span> : <span class="org-string">"value1"</span> }
+{ <span class="org-keyword">"delete"</span> : { <span class="org-keyword">"_index"</span> : <span class="org-string">"test"</span>, <span class="org-keyword">"_type"</span> : <span class="org-string">"type1"</span>, <span class="org-keyword">"_id"</span> : <span class="org-string">"2"</span> } }
+{ <span class="org-keyword">"create"</span> : { <span class="org-keyword">"_index"</span> : <span class="org-string">"test"</span>, <span class="org-keyword">"_type"</span> : <span class="org-string">"type1"</span>, <span class="org-keyword">"_id"</span> : <span class="org-string">"3"</span> } }
+{ <span class="org-keyword">"field1"</span> : <span class="org-string">"value3"</span> }
+{ <span class="org-keyword">"update"</span> : {<span class="org-keyword">"_id"</span> : <span class="org-string">"1"</span>, <span class="org-keyword">"_type"</span> : <span class="org-string">"type1"</span>, <span class="org-keyword">"_index"</span> : <span class="org-string">"index1"</span>} }
+{ <span class="org-keyword">"doc"</span> : {<span class="org-keyword">"field2"</span> : <span class="org-string">"value2"</span>} }
+</pre>
+</div>
+
+
+</section>
+<section id="sec-8-1" >
+
+<h3>parameters</h3>
+<ul class="org-ul">
+<li>version
+</li>
+<li>routing
+</li>
+<li>parent
+</li>
+<li>timestamp
+</li>
+<li>ttl
+</li>
+<li>write consistency
+</li>
+<li>refresh
+</li>
+</ul>
+</section>
+</section>
+<section>
+<section id="sec-9" >
+
+<h2>bulk udp api</h2>
+<ul class="org-ul">
+<li><code>bulk.udp.enabled</code> : true
+</li>
+<li><code>bulk.txt</code>
+</li>
+</ul>
+
+<div class="org-src-container">
+
+<pre class="src src-json">{ <span class="org-keyword">"index"</span> : { <span class="org-keyword">"_index"</span> : <span class="org-string">"test"</span>, <span class="org-keyword">"_type"</span> : <span class="org-string">"type1"</span> } }
+{ <span class="org-keyword">"field1"</span> : <span class="org-string">"value1"</span> }
+{ <span class="org-keyword">"index"</span> : { <span class="org-keyword">"_index"</span> : <span class="org-string">"test"</span>, <span class="org-keyword">"_type"</span> : <span class="org-string">"type1"</span> } }
+{ <span class="org-keyword">"field1"</span> : <span class="org-string">"value1"</span> }
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre class="src src-sh">$ cat bulk.txt | nc -w 0 -u localhost 9700
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="sec-10" >
+
+<h2>delete by query api</h2>
+</section>
+</section>
+</div>
+</div>
+<script src="./reveal.js/lib/js/head.min.js"></script>
+<script src="./reveal.js/js/reveal.min.js"></script>
+<script>
+
+        		// Full list of configuration options available here:
+        		// https://github.com/hakimel/reveal.js#configuration
+        		Reveal.initialize({
+        			controls: true,
+        			progress: true,
+        			history: false,
+        			center: true,
+        			rollingLinks: true,
+        			keyboard: true,
+        			overview: true,
+        			width: 1200, // slide width
+        			height: 800, // slide height
+        			 // slide margin
+        			 // slide minimum scaling factor
+        			 // slide maximum scaling factor
+
+
+        			theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        			transition: Reveal.getQueryHash().transition || 'fade', // default/cube/page/concave/zoom/linear/fade/none
+        			transitionSpeed: 'default',
+
+        			// Optional libraries used to extend on reveal.js
+        			dependencies: [
+        				{ src: './reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } }
+        				,{ src: './reveal.js/plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } }
+        				,{ src: './reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } }
+        				,{ src: './reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+        				,{ src: './reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } }
+        				,{ src: './reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+        				// { src: './reveal.js/plugin/search/search.js', async: true, condition: function() { return !!document.body.classList; } }
+        				// { src: './reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+         				
+        			]
+        		});
+</script>
+</body>
+</html>
